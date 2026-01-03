@@ -280,7 +280,14 @@ elif source == "Binance API":
                 st.success(f"Fetched Binance orderbook for {symbol_input}")
         except Exception as exc:
             bids, asks = None, None
-            st.error(f"Error fetching Binance orderbook for {symbol_input}: {exc}")
+            message = str(exc)
+
+            if "451" in message or "restricted location" in message:
+                st.warning(
+                    "Binance orderbook data is unavailable from this region due to access restrictions."
+                )
+            else:
+                st.error(f"Error fetching Binance orderbook for {symbol_input}: {exc}")
 
 
 # -----------------------------------
@@ -303,13 +310,15 @@ if source == "Upload CSV" and df is not None:
 elif source == "Binance API" and bids is not None and asks is not None:
     try:
         if bids.empty or asks.empty:
-            st.warning("Cannot compute order book imbalance: orderbook is empty.")
+            st.warning("Orderbook is empty or unavailable due to regional restrictions.")
+            st.caption("Binance may block access from this region.")
         else:
             imbalance = order_book_imbalance(bids, asks)
             st.metric("Order Book Imbalance", f"{imbalance:.4f}")
             st.caption(explain("order book imbalance"))
     except Exception as exc:
         st.error(f"Error computing order book imbalance: {exc}")
+
 else:
     st.caption("Upload a CSV or fetch a Binance orderbook to see metrics.")
 
@@ -334,6 +343,7 @@ elif source == "Binance API" and bids is not None and asks is not None:
             st.plotly_chart(depth_heatmap(bids, asks), use_container_width=True)
     except Exception as exc:
         st.error(f"Error generating depth heatmap: {exc}")
+
 else:
     st.caption("Provide data above to see visualizations.")
 
@@ -375,11 +385,21 @@ with col3:
     try:
         fx_row = fx_client.fetch_snapshot("EURUSDT")
         spread = fx_row.get("spread")
+
         if spread is not None:
             st.metric("EUR/USD Spread", f"{spread:.5f}")
+            st.caption("Live FX spread via Binance orderbook.")
         else:
             st.metric("EUR/USD Spread", "N/A")
-        st.caption("Live FX spread via Binance orderbook.")
+            st.caption("Spread unavailable from Binance.")
     except Exception as exc:
-        st.metric("EUR/USD Spread", "Error")
-        st.caption(f"Error fetching FX snapshot: {exc}")
+        message = str(exc)
+        if "451" in message or "restricted location" in message:
+            st.metric("EUR/USD Spread", "Unavailable")
+            st.caption(
+                "FX data cannot be fetched from Binance in this region. "
+                "This is a location restriction, not an app error."
+            )
+        else:
+            st.metric("EUR/USD Spread", "Error")
+            st.caption(f"Error fetching FX snapshot: {exc}")
