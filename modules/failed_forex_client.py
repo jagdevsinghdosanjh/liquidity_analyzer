@@ -1,18 +1,14 @@
 # modules/forex_client.py
 
 from typing import Dict, List
-import pandas as pd  # noqa
-
 from modules.api_client import MarketAPI
+import pandas as pd #noqa
 
 
 class ForexClient:
     """
     Forex client using Binance orderbook.
-
-    - Uses MarketAPI for /api/v3/depth
-    - Converts NumPy/pandas scalars safely
-    - Never silently swallows structure errors
+    Fixes Pylance errors by converting NumPy scalars safely.
     """
 
     def __init__(self):
@@ -28,15 +24,6 @@ class ForexClient:
             return None
 
     def fetch_snapshot(self, symbol: str) -> Dict:
-        """
-        Fetch a single FX snapshot from Binance orderbook.
-
-        Returns a dict with:
-            symbol, bid, ask, spread, timestamp
-
-        Raises:
-            Any exception propagated from MarketAPI if orderbook is invalid.
-        """
         bids, asks = self.api.get_orderbook(symbol)
 
         has_bids = bids is not None and not bids.empty
@@ -56,15 +43,6 @@ class ForexClient:
         }
 
     def fetch_multiple(self, pairs: Dict[str, str]) -> Dict[str, List]:
-        """
-        Fetch snapshots for a mapping: {display_name: symbol}.
-
-        Returns:
-            {
-                "success": [row_dict, ...],
-                "failed": [(name, symbol), ...]
-            }
-        """
         success: List[Dict] = []
         failed: List = []
 
@@ -77,3 +55,28 @@ class ForexClient:
                 failed.append((name, symbol))
 
         return {"success": success, "failed": failed}
+
+
+# from modules.api_client import MarketAPI
+
+# class ForexClient:
+#     def __init__(self):
+#         self.api = MarketAPI("https://api.binance.com")
+
+#     def fetch_snapshot(self, symbol: str):
+#         bids, asks = self.api.get_orderbook(symbol)
+#         return {
+#             "symbol": symbol,
+#             "bid": float(bids[0][0]) if bids else None,
+#             "ask": float(asks[0][0]) if asks else None,
+#             "spread": (float(asks[0][0]) - float(bids[0][0])) if bids and asks else None,
+#             "timestamp": "Live FX (Binance)",
+#         }
+
+#     def fetch_multiple(self, pairs: dict):
+#         success = []
+#         for name, symbol in pairs.items():
+#             row = self.fetch_snapshot(symbol)
+#             row["pair"] = name
+#             success.append(row)
+#         return {"success": success, "failed": []}

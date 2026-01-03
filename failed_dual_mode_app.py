@@ -52,6 +52,7 @@ US_COMPANIES = {
     "Oracle Corporation (ORCL)": "ORCL",
     "Cisco Systems, Inc. (CSCO)": "CSCO",
     "IBM Corporation (IBM)": "IBM",
+    # Extra US names
     "Netflix, Inc. (NFLX)": "NFLX",
     "Broadcom Inc. (AVGO)": "AVGO",
     "Qualcomm Inc. (QCOM)": "QCOM",
@@ -135,6 +136,7 @@ INDIA_COMPANIES = {
 }
 
 FOREX_PAIRS = {
+    # Major Pairs mapped to Binance symbols
     "EUR/USD (EURUSD)": "EURUSDT",
     "GBP/USD (GBPUSD)": "GBPUSDT",
     "USD/JPY (USDJPY)": "USDJPY",
@@ -142,6 +144,7 @@ FOREX_PAIRS = {
     "AUD/USD (AUDUSD)": "AUDUSDT",
     "NZD/USD (NZDUSD)": "NZDUSDT",
     "USD/CAD (USDCAD)": "USDCAD",
+    # Cross Pairs
     "EUR/GBP (EURGBP)": "EURGBP",
     "EUR/JPY (EURJPY)": "EURJPY",
     "GBP/JPY (GBPJPY)": "GBPJPY",
@@ -171,6 +174,7 @@ if mode == "US Market (Polygon)":
     st.sidebar.markdown("**Mode:** US (Polygon)")
 
 elif mode == "India Market (DhanHQ)":
+    # Using placeholder IndiaClient while KYC + Market Data Add-On are pending
     client = IndiaClient(DHAN_CLIENT_ID or "KYC_PENDING", DHAN_ACCESS_TOKEN or "KYC_PENDING")
     universe = INDIA_COMPANIES
     st.sidebar.markdown("**Mode:** India (DhanHQ – KYC Pending Placeholder)")
@@ -194,37 +198,31 @@ st.sidebar.write(f"Identifier: **{selected_symbol}**")
 # Fetch Selected
 # -----------------------------------
 if st.sidebar.button("Fetch Selected Instrument Data"):
-    try:
-        row = client.fetch_snapshot(selected_symbol)
-        if row:
-            st.subheader(f"📡 Real-Time Data — {selected_name}")
-            df_single = pd.DataFrame([row])
-            st.dataframe(df_single)
-        else:
-            st.warning(f"No data returned for {selected_symbol} in {mode}.")
-    except Exception as exc:
-        st.error(f"Error fetching snapshot for {selected_symbol}: {exc}")
+    row = client.fetch_snapshot(selected_symbol)
+    if row:
+        st.subheader(f"📡 Real-Time Data — {selected_name}")
+        df_single = pd.DataFrame([row])
+        st.dataframe(df_single)
+    else:
+        st.warning(f"No data returned for {selected_symbol} in {mode}.")
 
 
 # -----------------------------------
 # Fetch All in universe
 # -----------------------------------
 if st.sidebar.button("Fetch All Instruments"):
-    try:
-        result = client.fetch_multiple(universe)
-        success = result.get("success", [])
-        failed = result.get("failed", [])
+    result = client.fetch_multiple(universe)
+    success = result.get("success", [])
+    failed = result.get("failed", [])
 
-        if success:
-            st.subheader(f"📡 Real-Time Data — Successful ({mode})")
-            st.dataframe(pd.DataFrame(success))
+    if success:
+        st.subheader(f"📡 Real-Time Data — Successful ({mode})")
+        st.dataframe(pd.DataFrame(success))
 
-        if failed:
-            st.subheader("⚠️ Failed Instruments")
-            for name, symbol in failed:
-                st.markdown(f"- {name} (`{symbol}`)")
-    except Exception as exc:
-        st.error(f"Error fetching multiple instruments in {mode}: {exc}")
+    if failed:
+        st.subheader("⚠️ Failed Instruments")
+        for name, symbol in failed:
+            st.markdown(f"- {name} (`{symbol}`)")
 
 
 # -----------------------------------
@@ -266,21 +264,22 @@ if source == "Upload CSV":
 elif source == "Binance API":
     api = MarketAPI("https://api.binance.com")
 
+    # Popular Binance symbols
     default_symbols = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "EURUSDT", "GBPUSDT", "AUDUSDT"]
     selected_default = st.sidebar.selectbox("Choose a default symbol", default_symbols)
 
+    # Manual override
     symbol_input = st.sidebar.text_input("Or enter custom symbol", value=selected_default)
 
     if st.sidebar.button("Fetch Binance Orderbook"):
-        try:
-            bids, asks = api.get_orderbook(symbol_input)
-            if bids is None or bids.empty or asks is None or asks.empty:
-                st.warning(f"Orderbook for {symbol_input} returned empty data.")
-            else:
-                st.success(f"Fetched Binance orderbook for {symbol_input}")
-        except Exception as exc:
-            bids, asks = None, None
-            st.error(f"Error fetching Binance orderbook for {symbol_input}: {exc}")
+        bids, asks = api.get_orderbook(symbol_input)
+
+# elif source == "Binance API":
+#     api = MarketAPI("https://api.binance.com")
+#     default_symbol = "BTCUSDT"
+#     symbol_input = st.sidebar.text_input("Symbol (e.g. BTCUSDT, ETHUSDT)", default_symbol)
+#     if st.sidebar.button("Fetch Binance Orderbook"):
+#         bids, asks = api.get_orderbook(symbol_input)
 
 
 # -----------------------------------
@@ -302,12 +301,9 @@ if source == "Upload CSV" and df is not None:
 
 elif source == "Binance API" and bids is not None and asks is not None:
     try:
-        if bids.empty or asks.empty:
-            st.warning("Cannot compute order book imbalance: orderbook is empty.")
-        else:
-            imbalance = order_book_imbalance(bids, asks)
-            st.metric("Order Book Imbalance", f"{imbalance:.4f}")
-            st.caption(explain("order book imbalance"))
+        imbalance = order_book_imbalance(bids, asks)
+        st.metric("Order Book Imbalance", f"{imbalance:.4f}")
+        st.caption(explain("order book imbalance"))
     except Exception as exc:
         st.error(f"Error computing order book imbalance: {exc}")
 else:
@@ -328,10 +324,7 @@ if source == "Upload CSV" and df is not None:
 
 elif source == "Binance API" and bids is not None and asks is not None:
     try:
-        if bids.empty or asks.empty:
-            st.warning("Cannot plot depth heatmap: orderbook is empty.")
-        else:
-            st.plotly_chart(depth_heatmap(bids, asks), use_container_width=True)
+        st.plotly_chart(depth_heatmap(bids, asks), use_container_width=True)
     except Exception as exc:
         st.error(f"Error generating depth heatmap: {exc}")
 else:
@@ -372,14 +365,10 @@ with col2:
 with col3:
     st.markdown("**Forex Example (EUR/USD)**")
     fx_client = ForexClient()
-    try:
-        fx_row = fx_client.fetch_snapshot("EURUSDT")
-        spread = fx_row.get("spread")
-        if spread is not None:
-            st.metric("EUR/USD Spread", f"{spread:.5f}")
-        else:
-            st.metric("EUR/USD Spread", "N/A")
-        st.caption("Live FX spread via Binance orderbook.")
-    except Exception as exc:
-        st.metric("EUR/USD Spread", "Error")
-        st.caption(f"Error fetching FX snapshot: {exc}")
+    fx_row = fx_client.fetch_snapshot("EURUSDT")
+    spread = fx_row.get("spread")
+    if spread is not None:
+        st.metric("EUR/USD Spread", f"{spread:.5f}")
+    else:
+        st.metric("EUR/USD Spread", "N/A")
+    st.caption("Live FX spread via Binance orderbook.")
