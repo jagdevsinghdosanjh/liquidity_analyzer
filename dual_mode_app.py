@@ -189,21 +189,48 @@ selected_name = st.sidebar.selectbox("Choose instrument", list(universe.keys()))
 selected_symbol = universe[selected_name]
 st.sidebar.write(f"Identifier: **{selected_symbol}**")
 
-
 # -----------------------------------
 # Fetch Selected
 # -----------------------------------
 if st.sidebar.button("Fetch Selected Instrument Data"):
     try:
         row = client.fetch_snapshot(selected_symbol)
+
         if row:
             st.subheader(f"📡 Real-Time Data — {selected_name}")
             df_single = pd.DataFrame([row])
             st.dataframe(df_single)
         else:
             st.warning(f"No data returned for {selected_symbol} in {mode}.")
+
     except Exception as exc:
-        st.error(f"Error fetching snapshot for {selected_symbol}: {exc}")
+        message = str(exc)
+
+        # Graceful FX handling
+        if "451" in message or "restricted location" in message:
+            st.warning(
+                f"Live data for {selected_symbol} is unavailable in this region due to Binance access restrictions."
+            )
+            st.caption(
+                "This is a location restriction imposed by Binance, not an issue with the app."
+            )
+        else:
+            st.error(f"Error fetching snapshot for {selected_symbol}: {exc}")
+
+# # -----------------------------------
+# # Fetch Selected
+# # -----------------------------------
+# if st.sidebar.button("Fetch Selected Instrument Data"):
+#     try:
+#         row = client.fetch_snapshot(selected_symbol)
+#         if row:
+#             st.subheader(f"📡 Real-Time Data — {selected_name}")
+#             df_single = pd.DataFrame([row])
+#             st.dataframe(df_single)
+#         else:
+#             st.warning(f"No data returned for {selected_symbol} in {mode}.")
+#     except Exception as exc:
+#         st.error(f"Error fetching snapshot for {selected_symbol}: {exc}")
 
 
 # -----------------------------------
