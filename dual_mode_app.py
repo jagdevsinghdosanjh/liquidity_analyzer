@@ -50,10 +50,48 @@ US_COMPANIES = {
     "Oracle Corporation (ORCL)": "ORCL",
     "Cisco Systems, Inc. (CSCO)": "CSCO",
     "IBM Corporation (IBM)": "IBM",
+
+    # --- Additional High-Liquidity US Stocks ---
+    "Netflix, Inc. (NFLX)": "NFLX",
+    "Broadcom Inc. (AVGO)": "AVGO",
+    "Qualcomm Inc. (QCOM)": "QCOM",
+    "Salesforce, Inc. (CRM)": "CRM",
+    "PayPal Holdings, Inc. (PYPL)": "PYPL",
+    "Adobe Inc. (ADBE)": "ADBE",
+    "Costco Wholesale (COST)": "COST",
+    "Walmart Inc. (WMT)": "WMT",
+    "The Coca-Cola Company (KO)": "KO",
+    "PepsiCo, Inc. (PEP)": "PEP",
+    "McDonald's Corporation (MCD)": "MCD",
+    "Boeing Company (BA)": "BA",
+    "JPMorgan Chase & Co. (JPM)": "JPM",
+    "Bank of America (BAC)": "BAC",
+    "Visa Inc. (V)": "V",
+    "Mastercard Inc. (MA)": "MA",
+    "Exxon Mobil Corporation (XOM)": "XOM",
+    "Chevron Corporation (CVX)": "CVX",
+    "Pfizer Inc. (PFE)": "PFE",
+    "Johnson & Johnson (JNJ)": "JNJ",
+}
+FOREX_PAIRS = {
+    "EUR/USD": "EURUSD",
+    "GBP/USD": "GBPUSD",
+    "USD/JPY": "USDJPY",
+    "USD/CHF": "USDCHF",
+    "AUD/USD": "AUDUSD",
+    "NZD/USD": "NZDUSD",
+    "USD/CAD": "USDCAD",
+
+    # Cross pairs
+    "EUR/GBP": "EURGBP",
+    "EUR/JPY": "EURJPY",
+    "GBP/JPY": "GBPJPY",
+    "AUD/JPY": "AUDJPY",
+    "CHF/JPY": "CHFJPY",
 }
 
-# NOTE: Replace the values with Dhan's security IDs or symbols
 INDIA_COMPANIES = {
+    # --- Your Original Entries ---
     "Reliance Industries (RELIANCE)": "RELIANCE",
     "Tata Consultancy Services (TCS)": "TCS",
     "HDFC Bank (HDFCBANK)": "HDFCBANK",
@@ -63,7 +101,7 @@ INDIA_COMPANIES = {
     "Larsen & Toubro (LT)": "LT",
     "Bharti Airtel (AIRTEL)": "AIRTEL",
 
-    # --- Additional Large-Cap Indian Companies ---
+    # --- NIFTY 50 HEAVYWEIGHTS ---
     "Hindustan Unilever (HINDUNILVR)": "HINDUNILVR",
     "ITC Limited (ITC)": "ITC",
     "Kotak Mahindra Bank (KOTAKBANK)": "KOTAKBANK",
@@ -97,7 +135,74 @@ INDIA_COMPANIES = {
     "Britannia Industries (BRITANNIA)": "BRITANNIA",
     "Grasim Industries (GRASIM)": "GRASIM",
     "Havells India (HAVELLS)": "HAVELLS",
+
+    # --- HIGH-LIQUIDITY MIDCAPS (Great for teaching) ---
+    "Zomato (ZOMATO)": "ZOMATO",
+    "Paytm (PAYTM)": "PAYTM",
+    "IRCTC (IRCTC)": "IRCTC",
+    "Adani Green Energy (ADANIGREEN)": "ADANIGREEN",
+    "Adani Total Gas (ATGL)": "ATGL",
+    "Tata Power (TATAPOWER)": "TATAPOWER",
+    "Tata Elxsi (TATAELXSI)": "TATAELXSI",
+    "Persistent Systems (PERSISTENT)": "PERSISTENT",
+    "Coforge (COFORGE)": "COFORGE",
+    "Mphasis (MPHASIS)": "MPHASIS",
+    "DLF Limited (DLF)": "DLF",
+    "Godrej Properties (GODREJPROP)": "GODREJPROP",
+    "Hindalco Industries (HINDALCO)": "HINDALCO",
+    "Vedanta (VEDL)": "VEDL",
+    "Bank of Baroda (BANKBARODA)": "BANKBARODA",
+    "Punjab National Bank (PNB)": "PNB",
 }
+
+
+# NOTE: Replace the values with Dhan's security IDs or symbols
+
+# INDIA_COMPANIES = {
+#     "Reliance Industries (RELIANCE)": "RELIANCE",
+#     "Tata Consultancy Services (TCS)": "TCS",
+#     "HDFC Bank (HDFCBANK)": "HDFCBANK",
+#     "Infosys (INFY)": "INFY",
+#     "ICICI Bank (ICICIBANK)": "ICICIBANK",
+#     "State Bank of India (SBIN)": "SBIN",
+#     "Larsen & Toubro (LT)": "LT",
+#     "Bharti Airtel (AIRTEL)": "AIRTEL",
+
+#     # --- Additional Large-Cap Indian Companies ---
+#     "Hindustan Unilever (HINDUNILVR)": "HINDUNILVR",
+#     "ITC Limited (ITC)": "ITC",
+#     "Kotak Mahindra Bank (KOTAKBANK)": "KOTAKBANK",
+#     "Axis Bank (AXISBANK)": "AXISBANK",
+#     "Bajaj Finance (BAJFINANCE)": "BAJFINANCE",
+#     "Bajaj Finserv (BAJAJFINSV)": "BAJAJFINSV",
+#     "Maruti Suzuki (MARUTI)": "MARUTI",
+#     "Mahindra & Mahindra (M&M)": "M&M",
+#     "UltraTech Cement (ULTRACEMCO)": "ULTRACEMCO",
+#     "Asian Paints (ASIANPAINT)": "ASIANPAINT",
+#     "Titan Company (TITAN)": "TITAN",
+#     "Sun Pharma (SUNPHARMA)": "SUNPHARMA",
+#     "Wipro (WIPRO)": "WIPRO",
+#     "Tech Mahindra (TECHM)": "TECHM",
+#     "Power Grid Corporation (POWERGRID)": "POWERGRID",
+#     "NTPC Limited (NTPC)": "NTPC",
+#     "Coal India (COALINDIA)": "COALINDIA",
+#     "Adani Enterprises (ADANIENT)": "ADANIENT",
+#     "Adani Ports (ADANIPORTS)": "ADANIPORTS",
+#     "JSW Steel (JSWSTEEL)": "JSWSTEEL",
+#     "Tata Steel (TATASTEEL)": "TATASTEEL",
+#     "HCL Technologies (HCLTECH)": "HCLTECH",
+#     "Nestle India (NESTLEIND)": "NESTLEIND",
+#     "SBI Life Insurance (SBILIFE)": "SBILIFE",
+#     "HDFC Life Insurance (HDFCLIFE)": "HDFCLIFE",
+#     "Divi's Laboratories (DIVISLAB)": "DIVISLAB",
+#     "Dr. Reddy's Laboratories (DRREDDY)": "DRREDDY",
+#     "Eicher Motors (EICHERMOT)": "EICHERMOT",
+#     "Hero MotoCorp (HEROMOTOCO)": "HEROMOTOCO",
+#     "Tata Motors (TATAMOTORS)": "TATAMOTORS",
+#     "Britannia Industries (BRITANNIA)": "BRITANNIA",
+#     "Grasim Industries (GRASIM)": "GRASIM",
+#     "Havells India (HAVELLS)": "HAVELLS",
+# }
 
 
 # -----------------------------------
