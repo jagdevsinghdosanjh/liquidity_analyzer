@@ -31,6 +31,11 @@ st.title("💧 Liquidity Analyzer Pro")
 # Load Secrets
 # -----------------------------------
 POLYGON_API_KEY = st.secrets["polygon"]["api_key"]
+try:
+    POLYGON_API_KEY = st.secrets["polygon"]["api_key"]
+except KeyError:
+    st.error("Polygon API key not found. Please add it to secrets.toml or Streamlit Cloud settings.")
+    st.stop()
 
 # -----------------------------------
 # Company List
