@@ -18,8 +18,8 @@ from modules.teaching_mode import explain
 # -----------------------------------
 # Page config
 # -----------------------------------
-st.set_page_config(page_title="Liquidity Analyzer Pro", layout="wide")
-st.title("💧 Liquidity Analyzer Pro")
+st.set_page_config(page_title="Liquidity Dual Analyzer Pro", layout="wide")
+st.title("💧 Liquidity Dual Analyzer Pro")
 
 
 # -----------------------------------
