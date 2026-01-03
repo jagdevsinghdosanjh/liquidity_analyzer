@@ -1,0 +1,13 @@
+﻿,bid,ask,close,volume,depth1,depth2,expected_price,execution_price,execution_time_ms,depth3,timestamp,company,symbol,quality
+0,,,271.01,37782525,0,0,271.01,271.01,20,0,03-01-2026 17:00,Apple Inc. (AAPL),AAPL,Partial
+1,,,315.15,32012970,0,0,315.15,315.15,20,0,03-01-2026 17:00,Alphabet Inc. (GOOGL),GOOGL,Partial
+2,,,472.94,25564716,0,0,472.94,472.94,20,0,03-01-2026 17:00,Microsoft Corporation (MSFT),MSFT,Partial
+3,,,188.85,147894752,0,0,188.85,188.85,20,0,03-01-2026 17:00,NVIDIA Corporation (NVDA),NVDA,Partial
+4,,,438.07,85351571,0,0,438.07,438.07,20,0,03-01-2026 17:00,"Tesla, Inc. (TSLA)",TSLA,Partial
+5,,,,,0,0,,,20,0,03-01-2026 17:00,"Amazon.com, Inc. (AMZN)",AMZN,Missing
+6,,,650.41,13725409,0,0,650.41,650.41,20,0,03-01-2026 17:00,"Meta Platforms, Inc. (META)",META,Partial
+7,,,39.38,95334394,0,0,39.38,39.38,20,0,03-01-2026 17:01,Intel Corporation (INTC),INTC,Partial
+8,,,223.47,36443331,0,0,223.47,223.47,20,0,03-01-2026 17:01,"Advanced Micro Devices, Inc. (AMD)",AMD,Partial
+9,,,195.71,14538827,0,0,195.71,195.71,20,0,03-01-2026 17:01,Oracle Corporation (ORCL),ORCL,Partial
+10,,,76.04,15720037,0,0,76.04,76.04,20,0,03-01-2026 17:01,"Cisco Systems, Inc. (CSCO)",CSCO,Partial
+11,,,,,0,0,,,20,0,03-01-2026 17:01,IBM Corporation (IBM),IBM,Missing
