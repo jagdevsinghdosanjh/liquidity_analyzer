@@ -7,14 +7,9 @@ import pandas as pd
 
 from modules.polygon_client import PolygonClient
 from modules.india_client import IndiaClient
-from modules.forex_client import ForexClient
 from modules.data_loader import load_csv
 from modules.api_client import MarketAPI
-from modules.liquidity_metrics import (
-    bid_ask_spread,
-    amihud_illiquidity,
-    order_book_imbalance,
-)
+from modules.liquidity_metrics import bid_ask_spread, amihud_illiquidity, order_book_imbalance
 from modules.visualizer import plot_volume, plot_spread, depth_heatmap
 from modules.report_generator import generate_report
 from modules.teaching_mode import explain
@@ -23,20 +18,23 @@ from modules.teaching_mode import explain
 # -----------------------------------
 # Page config
 # -----------------------------------
-st.set_page_config(page_title="Liquidity Analyzer Pro", layout="wide")
-st.title("💧 Liquidity Analyzer Pro")
+st.set_page_config(page_title="Liquidity Dual Analyzer Pro", layout="wide")
+st.title("💧 Liquidity Dual Analyzer Pro")
 
 
 # -----------------------------------
 # Secrets
 # -----------------------------------
+# Polygon (US)
 POLYGON_API_KEY = st.secrets.get("polygon", {}).get("api_key")
+
+# Dhan (India)
 DHAN_CLIENT_ID = st.secrets.get("dhan", {}).get("client_id")
 DHAN_ACCESS_TOKEN = st.secrets.get("dhan", {}).get("access_token")
 
 
 # -----------------------------------
-# Universe definitions
+# Company lists
 # -----------------------------------
 
 US_COMPANIES = {
@@ -52,7 +50,8 @@ US_COMPANIES = {
     "Oracle Corporation (ORCL)": "ORCL",
     "Cisco Systems, Inc. (CSCO)": "CSCO",
     "IBM Corporation (IBM)": "IBM",
-    # Extra US names
+
+    # --- Additional High-Liquidity US Stocks ---
     "Netflix, Inc. (NFLX)": "NFLX",
     "Broadcom Inc. (AVGO)": "AVGO",
     "Qualcomm Inc. (QCOM)": "QCOM",
@@ -74,8 +73,25 @@ US_COMPANIES = {
     "Pfizer Inc. (PFE)": "PFE",
     "Johnson & Johnson (JNJ)": "JNJ",
 }
+FOREX_PAIRS = {
+    "EUR/USD": "EURUSD",
+    "GBP/USD": "GBPUSD",
+    "USD/JPY": "USDJPY",
+    "USD/CHF": "USDCHF",
+    "AUD/USD": "AUDUSD",
+    "NZD/USD": "NZDUSD",
+    "USD/CAD": "USDCAD",
+
+    # Cross pairs
+    "EUR/GBP": "EURGBP",
+    "EUR/JPY": "EURJPY",
+    "GBP/JPY": "GBPJPY",
+    "AUD/JPY": "AUDJPY",
+    "CHF/JPY": "CHFJPY",
+}
 
 INDIA_COMPANIES = {
+    # --- Your Original Entries ---
     "Reliance Industries (RELIANCE)": "RELIANCE",
     "Tata Consultancy Services (TCS)": "TCS",
     "HDFC Bank (HDFCBANK)": "HDFCBANK",
@@ -84,6 +100,8 @@ INDIA_COMPANIES = {
     "State Bank of India (SBIN)": "SBIN",
     "Larsen & Toubro (LT)": "LT",
     "Bharti Airtel (AIRTEL)": "AIRTEL",
+
+    # --- NIFTY 50 HEAVYWEIGHTS ---
     "Hindustan Unilever (HINDUNILVR)": "HINDUNILVR",
     "ITC Limited (ITC)": "ITC",
     "Kotak Mahindra Bank (KOTAKBANK)": "KOTAKBANK",
@@ -117,6 +135,8 @@ INDIA_COMPANIES = {
     "Britannia Industries (BRITANNIA)": "BRITANNIA",
     "Grasim Industries (GRASIM)": "GRASIM",
     "Havells India (HAVELLS)": "HAVELLS",
+
+    # --- HIGH-LIQUIDITY MIDCAPS (Great for teaching) ---
     "Zomato (ZOMATO)": "ZOMATO",
     "Paytm (PAYTM)": "PAYTM",
     "IRCTC (IRCTC)": "IRCTC",
@@ -135,72 +155,126 @@ INDIA_COMPANIES = {
     "Punjab National Bank (PNB)": "PNB",
 }
 
-FOREX_PAIRS = {
-    # Major Pairs mapped to Binance symbols
-    "EUR/USD (EURUSD)": "EURUSDT",
-    "GBP/USD (GBPUSD)": "GBPUSDT",
-    "USD/JPY (USDJPY)": "USDJPY",
-    "USD/CHF (USDCHF)": "USDCHF",
-    "AUD/USD (AUDUSD)": "AUDUSDT",
-    "NZD/USD (NZDUSD)": "NZDUSDT",
-    "USD/CAD (USDCAD)": "USDCAD",
-    # Cross Pairs
-    "EUR/GBP (EURGBP)": "EURGBP",
-    "EUR/JPY (EURJPY)": "EURJPY",
-    "GBP/JPY (GBPJPY)": "GBPJPY",
-    "AUD/JPY (AUDJPY)": "AUDJPY",
-    "CHF/JPY (CHFJPY)": "CHFJPY",
-}
+
+# NOTE: Replace the values with Dhan's security IDs or symbols
+
+# INDIA_COMPANIES = {
+#     "Reliance Industries (RELIANCE)": "RELIANCE",
+#     "Tata Consultancy Services (TCS)": "TCS",
+#     "HDFC Bank (HDFCBANK)": "HDFCBANK",
+#     "Infosys (INFY)": "INFY",
+#     "ICICI Bank (ICICIBANK)": "ICICIBANK",
+#     "State Bank of India (SBIN)": "SBIN",
+#     "Larsen & Toubro (LT)": "LT",
+#     "Bharti Airtel (AIRTEL)": "AIRTEL",
+
+#     # --- Additional Large-Cap Indian Companies ---
+#     "Hindustan Unilever (HINDUNILVR)": "HINDUNILVR",
+#     "ITC Limited (ITC)": "ITC",
+#     "Kotak Mahindra Bank (KOTAKBANK)": "KOTAKBANK",
+#     "Axis Bank (AXISBANK)": "AXISBANK",
+#     "Bajaj Finance (BAJFINANCE)": "BAJFINANCE",
+#     "Bajaj Finserv (BAJAJFINSV)": "BAJAJFINSV",
+#     "Maruti Suzuki (MARUTI)": "MARUTI",
+#     "Mahindra & Mahindra (M&M)": "M&M",
+#     "UltraTech Cement (ULTRACEMCO)": "ULTRACEMCO",
+#     "Asian Paints (ASIANPAINT)": "ASIANPAINT",
+#     "Titan Company (TITAN)": "TITAN",
+#     "Sun Pharma (SUNPHARMA)": "SUNPHARMA",
+#     "Wipro (WIPRO)": "WIPRO",
+#     "Tech Mahindra (TECHM)": "TECHM",
+#     "Power Grid Corporation (POWERGRID)": "POWERGRID",
+#     "NTPC Limited (NTPC)": "NTPC",
+#     "Coal India (COALINDIA)": "COALINDIA",
+#     "Adani Enterprises (ADANIENT)": "ADANIENT",
+#     "Adani Ports (ADANIPORTS)": "ADANIPORTS",
+#     "JSW Steel (JSWSTEEL)": "JSWSTEEL",
+#     "Tata Steel (TATASTEEL)": "TATASTEEL",
+#     "HCL Technologies (HCLTECH)": "HCLTECH",
+#     "Nestle India (NESTLEIND)": "NESTLEIND",
+#     "SBI Life Insurance (SBILIFE)": "SBILIFE",
+#     "HDFC Life Insurance (HDFCLIFE)": "HDFCLIFE",
+#     "Divi's Laboratories (DIVISLAB)": "DIVISLAB",
+#     "Dr. Reddy's Laboratories (DRREDDY)": "DRREDDY",
+#     "Eicher Motors (EICHERMOT)": "EICHERMOT",
+#     "Hero MotoCorp (HEROMOTOCO)": "HEROMOTOCO",
+#     "Tata Motors (TATAMOTORS)": "TATAMOTORS",
+#     "Britannia Industries (BRITANNIA)": "BRITANNIA",
+#     "Grasim Industries (GRASIM)": "GRASIM",
+#     "Havells India (HAVELLS)": "HAVELLS",
+# }
 
 
 # -----------------------------------
 # Market mode selector
 # -----------------------------------
+# mode = st.sidebar.radio("Market Mode", ["US Market (Polygon)", "India Market (DhanHQ)"])
 mode = st.sidebar.radio(
     "Market Mode",
     ["US Market (Polygon)", "India Market (DhanHQ)", "Forex Market (FX)"],
 )
 
-
-# -----------------------------------
-# Client selection by mode
-# -----------------------------------
 if mode == "US Market (Polygon)":
     if not POLYGON_API_KEY:
         st.error("Polygon API key missing. Add it to secrets.toml or Streamlit Cloud settings.")
         st.stop()
     client = PolygonClient(POLYGON_API_KEY)
-    universe = US_COMPANIES
+    companies = US_COMPANIES
     st.sidebar.markdown("**Mode:** US (Polygon)")
 
 elif mode == "India Market (DhanHQ)":
-    # Using placeholder IndiaClient while KYC + Market Data Add-On are pending
-    client = IndiaClient(DHAN_CLIENT_ID or "KYC_PENDING", DHAN_ACCESS_TOKEN or "KYC_PENDING")
-    universe = INDIA_COMPANIES
-    st.sidebar.markdown("**Mode:** India (DhanHQ – KYC Pending Placeholder)")
+    # Using your placeholder IndiaClient for now
+    if not DHAN_CLIENT_ID or not DHAN_ACCESS_TOKEN:
+        # Even if missing, we can still use placeholder client
+        from modules.india_client import IndiaClient
+        client = IndiaClient("KYC_PENDING", "KYC_PENDING")
+    else:
+        from modules.india_client import IndiaClient
+        client = IndiaClient(DHAN_CLIENT_ID, DHAN_ACCESS_TOKEN)
+
+    companies = INDIA_COMPANIES
+    st.sidebar.markdown("**Mode:** India (DhanHQ, KYC pending)")
 
 else:  # Forex Market (FX)
+    from modules.forex_client import ForexClient
+
     client = ForexClient()
-    universe = FOREX_PAIRS
+    companies = FOREX_PAIRS
     st.sidebar.markdown("**Mode:** Forex (Binance FX)")
 
 
+# if mode == "US Market (Polygon)":
+#     if not POLYGON_API_KEY:
+#         st.error("Polygon API key missing. Add it to secrets.toml or Streamlit Cloud settings.")
+#         st.stop()
+#     client = PolygonClient(POLYGON_API_KEY)
+#     companies = US_COMPANIES
+#     st.sidebar.markdown("**Mode:** US (Polygon)")
+# else:
+#     if not DHAN_CLIENT_ID or not DHAN_ACCESS_TOKEN:
+#         st.error("Dhan API credentials missing. Add them to secrets.toml or Streamlit Cloud settings.")
+#         st.stop()
+#     client = IndiaClient(DHAN_CLIENT_ID, DHAN_ACCESS_TOKEN)
+#     companies = INDIA_COMPANIES
+#     st.sidebar.markdown("**Mode:** India (DhanHQ)")
+
+
 # -----------------------------------
-# Sidebar – Selector
+# Sidebar – Company selector
 # -----------------------------------
-st.sidebar.subheader("Instrument Selector")
-selected_name = st.sidebar.selectbox("Choose instrument", list(universe.keys()))
-selected_symbol = universe[selected_name]
+st.sidebar.subheader("Company Selector")
+selected_company = st.sidebar.selectbox("Choose a company", list(companies.keys()))
+selected_symbol = companies[selected_company]
 st.sidebar.write(f"Identifier: **{selected_symbol}**")
 
 
 # -----------------------------------
-# Fetch Selected
+# Fetch selected company
 # -----------------------------------
-if st.sidebar.button("Fetch Selected Instrument Data"):
+if st.sidebar.button("Fetch Selected Company Data"):
     row = client.fetch_snapshot(selected_symbol)
     if row:
-        st.subheader(f"📡 Real-Time Data — {selected_name}")
+        st.subheader(f"📡 Real-Time Data — {selected_company}")
         df_single = pd.DataFrame([row])
         st.dataframe(df_single)
     else:
@@ -208,19 +282,19 @@ if st.sidebar.button("Fetch Selected Instrument Data"):
 
 
 # -----------------------------------
-# Fetch All in universe
+# Fetch all companies
 # -----------------------------------
-if st.sidebar.button("Fetch All Instruments"):
-    result = client.fetch_multiple(universe)
-    success = result.get("success", [])
-    failed = result.get("failed", [])
+if st.sidebar.button("Fetch All Companies"):
+    result = client.fetch_multiple(companies)
+    success = result["success"]
+    failed = result["failed"]
 
     if success:
         st.subheader(f"📡 Real-Time Data — Successful ({mode})")
         st.dataframe(pd.DataFrame(success))
 
     if failed:
-        st.subheader("⚠️ Failed Instruments")
+        st.subheader("⚠️ Failed Symbols")
         for name, symbol in failed:
             st.markdown(f"- {name} (`{symbol}`)")
 
@@ -233,7 +307,7 @@ with st.sidebar.expander("📘 Metric Guide"):
         """
         - **Bid:** Highest price buyers are willing to pay  
         - **Ask:** Lowest price sellers will accept  
-        - **Spread:** Ask - Bid (tighter = more liquid)  
+        - **Spread:** Ask - Bid (tight = liquid)  
         - **Volume:** Total traded quantity  
         - **Depth:** Quantity at top bid/ask levels  
         - **Execution Price:** Simulated trade price  
@@ -243,7 +317,7 @@ with st.sidebar.expander("📘 Metric Guide"):
 
 
 # -----------------------------------
-# Data source (CSV / Binance orderbook)
+# Data source (for CSV / Binance)
 # -----------------------------------
 st.sidebar.header("Data Source")
 source = st.sidebar.radio("Choose data source", ["Upload CSV", "Binance API"])
@@ -260,26 +334,11 @@ if source == "Upload CSV":
     if file:
         df = load_csv(file)
 
-# Binance API (generic orderbook)
+# Binance API
 elif source == "Binance API":
     api = MarketAPI("https://api.binance.com")
-
-    # Popular Binance symbols
-    default_symbols = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "EURUSDT", "GBPUSDT", "AUDUSDT"]
-    selected_default = st.sidebar.selectbox("Choose a default symbol", default_symbols)
-
-    # Manual override
-    symbol_input = st.sidebar.text_input("Or enter custom symbol", value=selected_default)
-
-    if st.sidebar.button("Fetch Binance Orderbook"):
-        bids, asks = api.get_orderbook(symbol_input)
-
-# elif source == "Binance API":
-#     api = MarketAPI("https://api.binance.com")
-#     default_symbol = "BTCUSDT"
-#     symbol_input = st.sidebar.text_input("Symbol (e.g. BTCUSDT, ETHUSDT)", default_symbol)
-#     if st.sidebar.button("Fetch Binance Orderbook"):
-#         bids, asks = api.get_orderbook(symbol_input)
+    symbol = st.sidebar.text_input("Symbol", "BTCUSDT")
+    bids, asks = api.get_orderbook(symbol)
 
 
 # -----------------------------------
@@ -288,26 +347,19 @@ elif source == "Binance API":
 st.subheader("📘 Liquidity Metrics")
 
 if source == "Upload CSV" and df is not None:
-    try:
-        metrics = {
-            "Bid-Ask Spread": bid_ask_spread(df),
-            "Amihud Illiquidity": amihud_illiquidity(df),
-        }
-        for name, value in metrics.items():
-            st.metric(name, f"{value:.6f}")
-            st.caption(explain(name))
-    except Exception as exc:
-        st.error(f"Error computing metrics from CSV: {exc}")
+    metrics = {
+        "Bid-Ask Spread": bid_ask_spread(df),
+        "Amihud Illiquidity": amihud_illiquidity(df),
+    }
+
+    for k, v in metrics.items():
+        st.metric(k, f"{v:.6f}")
+        st.caption(explain(k))
 
 elif source == "Binance API" and bids is not None and asks is not None:
-    try:
-        imbalance = order_book_imbalance(bids, asks)
-        st.metric("Order Book Imbalance", f"{imbalance:.4f}")
-        st.caption(explain("order book imbalance"))
-    except Exception as exc:
-        st.error(f"Error computing order book imbalance: {exc}")
-else:
-    st.caption("Upload a CSV or fetch a Binance orderbook to see metrics.")
+    imbalance = order_book_imbalance(bids, asks)
+    st.metric("Order Book Imbalance", f"{imbalance:.4f}")
+    st.caption(explain("order book imbalance"))
 
 
 # -----------------------------------
@@ -316,19 +368,11 @@ else:
 st.subheader("📊 Visualizations")
 
 if source == "Upload CSV" and df is not None:
-    try:
-        st.plotly_chart(plot_volume(df), use_container_width=True)
-        st.plotly_chart(plot_spread(df), use_container_width=True)
-    except Exception as exc:
-        st.error(f"Error generating CSV-based plots: {exc}")
+    st.plotly_chart(plot_volume(df), use_container_width=True)
+    st.plotly_chart(plot_spread(df), use_container_width=True)
 
 elif source == "Binance API" and bids is not None and asks is not None:
-    try:
-        st.plotly_chart(depth_heatmap(bids, asks), use_container_width=True)
-    except Exception as exc:
-        st.error(f"Error generating depth heatmap: {exc}")
-else:
-    st.caption("Provide data above to see visualizations.")
+    st.plotly_chart(depth_heatmap(bids, asks), use_container_width=True)
 
 
 # -----------------------------------
@@ -336,39 +380,9 @@ else:
 # -----------------------------------
 if st.button("Generate PDF Report"):
     if metrics:
-        try:
-            filename = generate_report(metrics)
-            st.success("Report generated!")
-            with open(filename, "rb") as f:
-                st.download_button("Download Report", f, file_name=filename)
-        except Exception as exc:
-            st.error(f"Error generating report: {exc}")
+        filename = generate_report(metrics)
+        st.success("Report generated!")
+        with open(filename, "rb") as f:
+            st.download_button("Download Report", f, file_name=filename)
     else:
         st.warning("Metrics are not available yet. Upload a CSV first.")
-
-
-# -----------------------------------
-# Optional small global snapshot
-# -----------------------------------
-st.subheader("🌍 Global Snapshot (US / India / Forex)")
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.markdown("**US Example (MSFT)**")
-    st.caption("Use US mode above to fetch full snapshot via Polygon.")
-
-with col2:
-    st.markdown("**India Example (INFY)**")
-    st.caption("India mode currently uses placeholder data (KYC pending).")
-
-with col3:
-    st.markdown("**Forex Example (EUR/USD)**")
-    fx_client = ForexClient()
-    fx_row = fx_client.fetch_snapshot("EURUSDT")
-    spread = fx_row.get("spread")
-    if spread is not None:
-        st.metric("EUR/USD Spread", f"{spread:.5f}")
-    else:
-        st.metric("EUR/USD Spread", "N/A")
-    st.caption("Live FX spread via Binance orderbook.")
