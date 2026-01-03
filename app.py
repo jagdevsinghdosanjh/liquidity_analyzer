@@ -55,7 +55,7 @@ client = PolygonClient(POLYGON_API_KEY)
 # -----------------------------------
 # Sidebar – Company Selector
 # -----------------------------------
-st.sidebar.subheader("Polygon Company Selector")
+st.sidebar.subheader("Company Selector")
 selected_company = st.sidebar.selectbox("Choose a company", list(COMPANIES.keys()))
 selected_symbol = COMPANIES[selected_company]
 st.sidebar.write(f"Symbol: **{selected_symbol}**")
