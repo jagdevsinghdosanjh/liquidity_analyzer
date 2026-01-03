@@ -1,0 +1,9 @@
+[api]
+provider = "binance"
+base_url = "https://api.binance.com"
+api_key = "YOUR_API_KEY_HERE"
+api_secret = "YOUR_API_SECRET_HERE"
+
+[app]
+title = "Liquidity Analyzer Pro"
+theme = "light"
