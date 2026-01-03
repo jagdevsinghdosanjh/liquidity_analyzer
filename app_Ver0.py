@@ -1,31 +1,41 @@
 import streamlit as st
-import pandas as pd
-
-from modules.polygon_client import PolygonClient
-from modules.data_loader import load_csv
-from modules.api_client import MarketAPI
-from modules.liquidity_metrics import bid_ask_spread, amihud_illiquidity, order_book_imbalance
-from modules.visualizer import plot_volume, plot_spread, depth_heatmap
-from modules.report_generator import generate_report
-from modules.teaching_mode import explain
-
 
 # -----------------------------------
-# Page Config
+# Imports
+# -----------------------------------
+from modules.data_loader import load_csv
+from modules.api_client import MarketAPI
+from modules.report_generator import generate_report
+from modules.teaching_mode import explain
+from modules.polygon_client import PolygonClient
+
+from modules.liquidity_metrics import (
+    bid_ask_spread,
+    amihud_illiquidity,
+    order_book_imbalance
+)
+
+from modules.visualizer import (
+    plot_volume,
+    plot_spread,
+    depth_heatmap
+)
+
+# -----------------------------------
+# Streamlit Page Config
 # -----------------------------------
 st.set_page_config(page_title="Liquidity Analyzer Pro", layout="wide")
 st.title("💧 Liquidity Analyzer Pro")
 
-
 # -----------------------------------
-# Secrets
+# Load Secrets
 # -----------------------------------
+POLYGON_API_KEY = st.secrets["polygon"]["api_key"]
 try:
     POLYGON_API_KEY = st.secrets["polygon"]["api_key"]
 except KeyError:
-    st.error("Polygon API key missing. Add it to secrets.toml or Streamlit Cloud settings.")
+    st.error("Polygon API key not found. Please add it to secrets.toml or Streamlit Cloud settings.")
     st.stop()
-
 
 # -----------------------------------
 # Company List
@@ -36,6 +46,7 @@ COMPANIES = {
     "Microsoft Corporation (MSFT)": "MSFT",
     "NVIDIA Corporation (NVDA)": "NVDA",
     "Tesla, Inc. (TSLA)": "TSLA",
+    "Infosys Ltd. (INFY)": "INFY",  # US ADR supported
     "Amazon.com, Inc. (AMZN)": "AMZN",
     "Meta Platforms, Inc. (META)": "META",
     "Intel Corporation (INTC)": "INTC",
@@ -45,12 +56,10 @@ COMPANIES = {
     "IBM Corporation (IBM)": "IBM",
 }
 
-
 # -----------------------------------
 # Polygon Client
 # -----------------------------------
 client = PolygonClient(POLYGON_API_KEY)
-
 
 # -----------------------------------
 # Sidebar – Company Selector
@@ -60,22 +69,21 @@ selected_company = st.sidebar.selectbox("Choose a company", list(COMPANIES.keys(
 selected_symbol = COMPANIES[selected_company]
 st.sidebar.write(f"Symbol: **{selected_symbol}**")
 
-
 # -----------------------------------
-# Fetch Selected Company
+# Sidebar – Fetch Buttons
 # -----------------------------------
 if st.sidebar.button("Fetch Selected Company Data"):
     row = client.fetch_snapshot(selected_symbol)
     if row:
         st.subheader(f"📡 Polygon Real-Time Data — {selected_company}")
-        st.dataframe(pd.DataFrame([row]))
+        st.dataframe([row])
     else:
         st.warning(f"No data returned for {selected_symbol}.")
 
-
-# -----------------------------------
-# Fetch All Companies
-# -----------------------------------
+# if st.sidebar.button("Fetch All Companies"):
+#     data = client.fetch_multiple(COMPANIES)
+#     st.subheader("📡 Polygon Real-Time Data — All Companies")
+#     st.dataframe(data)
 if st.sidebar.button("Fetch All Companies"):
     result = client.fetch_multiple(COMPANIES)
     success = result["success"]
@@ -83,69 +91,56 @@ if st.sidebar.button("Fetch All Companies"):
 
     if success:
         st.subheader("📡 Polygon Real-Time Data — Successful")
-        st.dataframe(pd.DataFrame(success))
+        st.dataframe(success)
+    else:
+        st.warning("No successful data returned.")
 
     if failed:
         st.subheader("⚠️ Failed Symbols")
         for name, symbol in failed:
             st.markdown(f"- {name} (`{symbol}`)")
 
-
 # -----------------------------------
-# Teaching Overlay
+# Initialize variables
 # -----------------------------------
-with st.sidebar.expander("📘 Metric Guide"):
-    st.markdown("""
-    - **Bid**: Highest price buyers are willing to pay  
-    - **Ask**: Lowest price sellers will accept  
-    - **Spread**: Ask - Bid (tight = liquid)  
-    - **Volume**: Total shares traded  
-    - **Depth**: Volume at top bid/ask levels  
-    - **Execution Price**: Simulated trade price  
-    - **Expected Price**: Midpoint of bid and ask  
-    """)
-
-
-# -----------------------------------
-# Data Source
-# -----------------------------------
-st.sidebar.header("Data Source")
-source = st.sidebar.radio("Choose data source", ["Upload CSV", "Binance API"])
-
 df = None
 bids = None
 asks = None
 metrics = {}
 
+# -----------------------------------
+# Sidebar – Data Source
+# -----------------------------------
+st.sidebar.header("Data Source")
+source = st.sidebar.radio("Choose data source", ["Upload CSV", "Binance API"])
 
 # -----------------------------------
-# CSV Upload
+# CSV Upload Mode
 # -----------------------------------
 if source == "Upload CSV":
     file = st.sidebar.file_uploader("Upload CSV", type=["csv"])
     if file:
         df = load_csv(file)
 
-
 # -----------------------------------
-# Binance API
+# Binance API Mode
 # -----------------------------------
 elif source == "Binance API":
     api = MarketAPI("https://api.binance.com")
     symbol = st.sidebar.text_input("Symbol", "BTCUSDT")
     bids, asks = api.get_orderbook(symbol)
 
-
-# -----------------------------------
-# Metrics
 # -----------------------------------
 # Metrics Section
+# -----------------------------------
 st.subheader("📘 Liquidity Metrics")
+
 if source == "Upload CSV" and df is not None:
     metrics = {
         "Bid-Ask Spread": bid_ask_spread(df),
         "Amihud Illiquidity": amihud_illiquidity(df),
     }
+
     for k, v in metrics.items():
         st.metric(k, f"{v:.6f}")
         st.caption(explain(k))
@@ -155,43 +150,17 @@ elif source == "Binance API" and bids is not None and asks is not None:
     st.metric("Order Book Imbalance", f"{imbalance:.4f}")
     st.caption(explain("order book imbalance"))
 
-# st.subheader("📘 Liquidity Metrics")
-
-# if source == "Upload CSV" and df is not None:
-#     metrics = {
-#         "Bid-Ask Spread": bid_ask_spread(df),
-#         "Amihud Illiquidity": amihud_illiquidity(df),
-#     }
-
-#     for k, v in metrics.items():
-#         st.metric(k, f"{v:.6f}")
-#         st.caption(explain(k))
-
-# elif source == "Binance API" and bids and asks:
-#     imbalance = order_book_imbalance(bids, asks)
-#     st.metric("Order Book Imbalance", f"{imbalance:.4f}")
-#     st.caption(explain("order book imbalance"))
-
-
 # -----------------------------------
 # Visualizations
 # -----------------------------------
 st.subheader("📊 Visualizations")
+
 if source == "Upload CSV" and df is not None:
     st.plotly_chart(plot_volume(df), use_container_width=True)
     st.plotly_chart(plot_spread(df), use_container_width=True)
 
 elif source == "Binance API" and bids is not None and asks is not None:
     st.plotly_chart(depth_heatmap(bids, asks), use_container_width=True)
-
-
-# if source == "Upload CSV" and df is not None:
-#     st.plotly_chart(plot_volume(df), use_container_width=True)
-#     st.plotly_chart(plot_spread(df), use_container_width=True)
-
-# elif source == "Binance API" and bids and asks:
-#     st.plotly_chart(depth_heatmap(bids, asks), use_container_width=True)
-
 
 # -----------------------------------
 # PDF Report
